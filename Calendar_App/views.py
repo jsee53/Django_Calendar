@@ -63,3 +63,76 @@ def login(request):
             'message': '잘못된 요청입니다.'
         }
         return JsonResponse(response_data, status=400)
+    
+@csrf_exempt
+def signup(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            id = data['id']
+            password = data['password']
+            name = data['name']
+            birthDate = data['birthDate']
+            email = data['email']
+            
+            # 여기에서 받은 사용자 값을 활용하여 원하는 로직을 수행합니다.
+            # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
+            
+            # 응답 데이터를 만들어 클라이언트에게 전송합니다.
+            response_data = {
+                'id': id,
+                'password': password,
+                'name':name,
+                'birthDate':birthDate,
+                'email':email,
+                'message': '회원가입 성공!',
+            }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
+
+@csrf_exempt
+def schedule(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            date = data['date']
+            
+            # 여기에서 받은 date 값을 활용하여 원하는 로직을 수행합니다.
+            # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
+
+            schedule_data = [
+                {'date': '2023-05-23', 'title': '일정 1'},
+                {'date': '2023-05-23', 'title': '일정 2'},
+                {'date': '2023-05-24', 'title': '일정 3'},
+                {'date':  date, 'title': '일정 4'},
+                ]
+            
+            # 응답 데이터를 만들어 클라이언트에게 전송합니다.
+            response_data = {
+                'schedule': schedule_data,
+                'message': '일정 불러오기 성공!',
+            }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
