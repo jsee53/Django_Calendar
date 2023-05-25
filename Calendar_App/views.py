@@ -45,11 +45,19 @@ def login(request):
             # 여기에서 받은 id와 password 값을 활용하여 원하는 로직을 수행합니다.
             # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
             
+            successLogin=True; # 로그인 정보가 데이터베이스 정보와 일치하면
+
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
+            
+            schedule_data = [
+                {'date': '2023-05-23', 'title': '일정 1'},
+                {'date': '2023-05-23', 'title': '일정 2'},
+                {'date': '2023-05-24', 'title': '일정 3'},
+                ]
+            
             response_data = {
-                'id': id,
-                'password': password,
-                'message': '로그인 성공!',
+                'schedule_data' : schedule_data,
+                'successLogin' : successLogin,
             }
             return JsonResponse(response_data)
         except json.JSONDecodeError as e:
@@ -78,14 +86,11 @@ def signup(request):
             
             # 여기에서 받은 사용자 값을 활용하여 원하는 로직을 수행합니다.
             # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
-            
+
+            successSignup=True; #회원가입 성공 시 true, 실패 시 false 가 되는 로직을 수행
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
             response_data = {
-                'id': id,
-                'password': password,
-                'name':name,
-                'birthDate':birthDate,
-                'email':email,
+                'successSignup' : successSignup,
                 'message': '회원가입 성공!',
             }
             return JsonResponse(response_data)
@@ -113,10 +118,8 @@ def schedule(request):
             # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
 
             schedule_data = [
-                {'date': '2023-05-23', 'title': '일정 1'},
-                {'date': '2023-05-23', 'title': '일정 2'},
-                {'date': '2023-05-24', 'title': '일정 3'},
-                {'date':  date, 'title': '일정 4'},
+                {'date': '2023-05-27', 'title': '2023-AIX 해커톤'},
+                {'date': '2023-05-27', 'title': '네이버웹툰 지상 최대 공모전'},
                 ]
             
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
