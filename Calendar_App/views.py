@@ -1,6 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
+import pyodbc
     
 @csrf_exempt
 def main(request):
@@ -10,9 +11,6 @@ def main(request):
             data = json.loads(request.body)
             title = data['title']
             date = data['date']
-            
-        # 여기에서 받은 title과 date 값을 활용하여 원하는 로직을 수행합니다.
-        # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
             
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
             response_data = {
@@ -36,28 +34,40 @@ def main(request):
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
-        # POST 요청의 경우 처리 로직을 구현합니다.
         try:
             data = json.loads(request.body)
-            id = data['id']
+            user_id = data['id']
             password = data['password']
+
+            # 데이터 베이스 연동            
+            # 아이디와 비밀번호 일치 여부 확인
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
             
-            # 여기에서 받은 id와 password 값을 활용하여 원하는 로직을 수행합니다.
-            # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
-            
-            successLogin=True; # 로그인 정보가 데이터베이스 정보와 일치하면
+            sql = "SELECT id FROM Users WHERE user_id = ? AND password = ?"
+            curs.execute(sql, (user_id, password))
+            row = curs.fetchone()
+            if row:
+                # 로그인 성공 처리 및 추가 작업 수행
+                user_key = row[0]
+                success_login=True
+            else:
+                # 로그인 실패 처리
+                success_login=False
+
+            curs.close()
+            db.close()
 
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
-            
             schedule_data = [
                 {'date': '2023-05-23', 'title': '일정 1'},
                 {'date': '2023-05-23', 'title': '일정 2'},
                 {'date': '2023-05-24', 'title': '일정 3'},
-                ]
-            
+            ]
             response_data = {
-                'schedule_data' : schedule_data,
-                'successLogin' : successLogin,
+                'schedule_data': schedule_data,
+                'login_result': success_login,
+                'user_key': user_key,
             }
             return JsonResponse(response_data)
         except json.JSONDecodeError as e:
@@ -66,7 +76,6 @@ def login(request):
             }
             return JsonResponse(response_data, status=400)
     else:
-        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
         response_data = {
             'message': '잘못된 요청입니다.'
         }
@@ -84,8 +93,17 @@ def signup(request):
             birthDate = data['birthDate']
             email = data['email']
             
-            # 여기에서 받은 사용자 값을 활용하여 원하는 로직을 수행합니다.
-            # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
+
+            # 데이터 입력
+            sql = "INSERT INTO Users (id, user_id, password, user_name, date_of_birth, email) VALUES (SEQ_ID.NEXTVAL, ?, ?, ?, ?, ?)"
+            curs.execute(sql, (id, password, name, birthDate, email))
+            db.commit()  # 변경 사항 커밋
+
+            curs.close()
+            db.close()
 
             successSignup=True; #회원가입 성공 시 true, 실패 시 false 가 되는 로직을 수행
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
