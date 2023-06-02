@@ -157,3 +157,40 @@ def schedule(request):
             'message': '잘못된 요청입니다.'
         }
         return JsonResponse(response_data, status=400)
+    
+@csrf_exempt
+def addpost(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            id_key = data['id_key']
+            title = data['title']
+            schedule_date = data['date']
+            
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
+
+            # 데이터 입력
+            sql = "INSERT INTO Schedule (title, schedule_date, post_img, user_id) VALUES (?, ?, NULL, ?)"
+            curs.execute(sql, (title, schedule_date, id_key))
+            db.commit()  # 변경 사항 커밋
+
+            curs.close()
+            db.close()
+            response_data = {
+                'message': '일정추가 성공!.'
+                }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
