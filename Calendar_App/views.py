@@ -130,15 +130,29 @@ def schedule(request):
         # POST 요청의 경우 처리 로직을 구현합니다.
         try:
             data = json.loads(request.body)
-            date = data['date']
+            id_key = data['id_key']
+            selectedDate = data['selectedDate']
             
-            # 여기에서 받은 date 값을 활용하여 원하는 로직을 수행합니다.
-            # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
 
-            schedule_data = [
-                {'date': '2023-05-27', 'title': '2023-AIX 해커톤'},
-                {'date': '2023-05-27', 'title': '네이버웹툰 지상 최대 공모전'},
-                ]
+            # 데이터 조회
+            # 데이터베이스에서 id_key와 선택 날짜를 통해 일정 데이터를 불러온다.
+            query = "SELECT TITLE FROM SCHEDULE WHERE USER_ID = ? AND SCHEDULE_DATE = ?"
+            curs.execute(query, id_key, selectedDate)
+            schedule_rows = curs.fetchall()
+
+            curs.close()
+            db.close()
+
+            schedule_data = []
+            for row in schedule_rows:
+                # 각 row에서 필요한 정보를 추출하여 schedule_data에 추가합니다.
+                schedule_data.append({
+                    'title': row[0],
+                    # 추가적인 필드 정보를 추출하여 딕셔너리 형태로 저장합니다.
+                })
             
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
             response_data = {
