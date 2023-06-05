@@ -218,3 +218,51 @@ def addpost(request):
             'message': '잘못된 요청입니다.'
         }
         return JsonResponse(response_data, status=400)
+    
+@csrf_exempt
+def profile(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            id_key = data['id_key']
+            
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
+
+            # 데이터 조회
+            # 데이터베이스에서 사용자의 아이디와 이메일, 생년월일을 불러온다.
+            query = "SELECT USER_ID, USER_NAME, DATE_OF_BIRTH, EMAIL FROM USERS WHERE ID=?"
+            curs.execute(query, id_key)
+            
+            rows = curs.fetchall()
+            for row in rows:
+                user_id = row[0]
+                user_name = row[1]
+                date_of_birth = row[2]
+                email = row[3]
+
+            curs.close()
+            db.close()
+            
+            # 응답 데이터를 만들어 클라이언트에게 전송합니다.
+            response_data = {
+                'user_id': user_id,
+                'user_name': user_name,
+                'date_of_birth': date_of_birth,
+                'email': email,
+                'message': '일정 불러오기 성공!',
+            }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
