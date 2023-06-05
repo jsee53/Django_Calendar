@@ -4,19 +4,36 @@ import json
 import pyodbc
     
 @csrf_exempt
-def main(request):
+def calendar(request):
     if request.method == 'POST':
         # POST 요청의 경우 처리 로직을 구현합니다.
         try:
             data = json.loads(request.body)
-            title = data['title']
-            date = data['date']
+            id_key = data['id_key']
+
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
+
+            # 사용자의 일정 정보를 DB에서 받아옴
+            sql = "SELECT SCHEDULE_DATE FROM Schedule WHERE USER_ID = ?"
+            curs.execute(sql, id_key)
+
+            # 사용자의 일정 정보
+            schedule_data = []
+
+            # 일정 정보 가져오기
+            rows = curs.fetchall()
+            for row in rows:
+                schedule_data.append(row.SCHEDULE_DATE)
+
+            # 연결 종료
+            curs.close()
+            db.close()
             
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
             response_data = {
-                'title':title,
-                'date':date,
-                'message': '게시물이 추가되었습니다.',
+                'schedule_data':schedule_data,
                 }
             return JsonResponse(response_data)
         except json.JSONDecodeError as e:
@@ -49,7 +66,7 @@ def login(request):
             row = curs.fetchone()
             if row:
                 # 로그인 성공 처리 및 추가 작업 수행
-                user_key = row[0]
+                id_key = row[0]
                 success_login=True
             else:
                 # 로그인 실패 처리
@@ -58,16 +75,9 @@ def login(request):
             curs.close()
             db.close()
 
-            # 응답 데이터를 만들어 클라이언트에게 전송합니다.
-            schedule_data = [
-                {'date': '2023-05-23', 'title': '일정 1'},
-                {'date': '2023-05-23', 'title': '일정 2'},
-                {'date': '2023-05-24', 'title': '일정 3'},
-            ]
             response_data = {
-                'schedule_data': schedule_data,
                 'login_result': success_login,
-                'user_key': user_key,
+                'id_key': id_key,
             }
             return JsonResponse(response_data)
         except json.JSONDecodeError as e:
