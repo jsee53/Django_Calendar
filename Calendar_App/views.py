@@ -16,26 +16,32 @@ def calendar(request):
             curs = db.cursor()
 
             # 사용자의 일정 정보를 DB에서 받아옴
-            sql = "SELECT SCHEDULE_DATE FROM Schedule WHERE USER_ID = ?"
+            sql = "SELECT START_DAY, END_DAY FROM Schedule WHERE USER_ID = ?"
             curs.execute(sql, id_key)
 
             # 사용자의 일정 정보
-            schedule_data = []
+            response_data = []
 
             # 일정 정보 가져오기
             rows = curs.fetchall()
             for row in rows:
-                schedule_data.append(row.SCHEDULE_DATE)
+                start_date = row[0]  # 시작 날짜
+                end_date = row[1]  # 종료 날짜
+            
+                # 일정 정보를 딕셔너리 형태로 저장
+                schedule = {
+                    'start_date': start_date,
+                    'end_date': end_date
+                }
+
+                # 일정 정보를 리스트에 추가
+                response_data.append(schedule)
 
             # 연결 종료
             curs.close()
             db.close()
             
-            # 응답 데이터를 만들어 클라이언트에게 전송합니다.
-            response_data = {
-                'schedule_data':schedule_data,
-                }
-            return JsonResponse(response_data)
+            return JsonResponse(response_data, safe=False)
         except json.JSONDecodeError as e:
             response_data = {
                 'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
@@ -149,7 +155,7 @@ def schedule(request):
 
             # 데이터 조회
             # 데이터베이스에서 id_key와 선택 날짜를 통해 일정 데이터를 불러온다.
-            query = "SELECT TITLE FROM SCHEDULE WHERE USER_ID = ? AND SCHEDULE_DATE = ?"
+            query = "SELECT TITLE FROM SCHEDULE WHERE USER_ID = ? AND ? BETWEEN START_DAY AND END_DAY"
             curs.execute(query, id_key, selectedDate)
             schedule_rows = curs.fetchall()
 
@@ -190,15 +196,16 @@ def addpost(request):
             data = json.loads(request.body)
             id_key = data['id_key']
             title = data['title']
-            schedule_date = data['date']
+            startDay = data['startDay']
+            endDay= data['endDay']
             
             # 데이터 베이스 연동
             db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
             curs = db.cursor()
 
             # 데이터 입력
-            sql = "INSERT INTO Schedule (title, schedule_date, post_img, user_id) VALUES (?, ?, NULL, ?)"
-            curs.execute(sql, (title, schedule_date, id_key))
+            sql = "INSERT INTO Schedule (TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (?, ?, ?, NULL, ?)"
+            curs.execute(sql, (title, startDay, endDay, id_key))
             db.commit()  # 변경 사항 커밋
 
             curs.close()
