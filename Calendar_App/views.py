@@ -4,21 +4,44 @@ import json
 import pyodbc
     
 @csrf_exempt
-def main(request):
+def calendar(request):
     if request.method == 'POST':
         # POST 요청의 경우 처리 로직을 구현합니다.
         try:
             data = json.loads(request.body)
-            title = data['title']
-            date = data['date']
+            id_key = data['id_key']
+
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
+
+            # 사용자의 일정 정보를 DB에서 받아옴
+            sql = "SELECT START_DAY, END_DAY FROM Schedule WHERE USER_ID = ?"
+            curs.execute(sql, id_key)
+
+            # 사용자의 일정 정보
+            response_data = []
+
+            # 일정 정보 가져오기
+            rows = curs.fetchall()
+            for row in rows:
+                start_date = row[0]  # 시작 날짜
+                end_date = row[1]  # 종료 날짜
             
-            # 응답 데이터를 만들어 클라이언트에게 전송합니다.
-            response_data = {
-                'title':title,
-                'date':date,
-                'message': '게시물이 추가되었습니다.',
+                # 일정 정보를 딕셔너리 형태로 저장
+                schedule = {
+                    'start_date': start_date,
+                    'end_date': end_date
                 }
-            return JsonResponse(response_data)
+
+                # 일정 정보를 리스트에 추가
+                response_data.append(schedule)
+
+            # 연결 종료
+            curs.close()
+            db.close()
+            
+            return JsonResponse(response_data, safe=False)
         except json.JSONDecodeError as e:
             response_data = {
                 'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
@@ -49,7 +72,7 @@ def login(request):
             row = curs.fetchone()
             if row:
                 # 로그인 성공 처리 및 추가 작업 수행
-                user_key = row[0]
+                id_key = row[0]
                 success_login=True
             else:
                 # 로그인 실패 처리
@@ -58,16 +81,9 @@ def login(request):
             curs.close()
             db.close()
 
-            # 응답 데이터를 만들어 클라이언트에게 전송합니다.
-            schedule_data = [
-                {'date': '2023-05-23', 'title': '일정 1'},
-                {'date': '2023-05-23', 'title': '일정 2'},
-                {'date': '2023-05-24', 'title': '일정 3'},
-            ]
             response_data = {
-                'schedule_data': schedule_data,
                 'login_result': success_login,
-                'user_key': user_key,
+                'id_key': id_key,
             }
             return JsonResponse(response_data)
         except json.JSONDecodeError as e:
@@ -130,15 +146,29 @@ def schedule(request):
         # POST 요청의 경우 처리 로직을 구현합니다.
         try:
             data = json.loads(request.body)
-            date = data['date']
+            id_key = data['id_key']
+            selectedDate = data['selectedDate']
             
-            # 여기에서 받은 date 값을 활용하여 원하는 로직을 수행합니다.
-            # 예를 들어, 데이터베이스에 저장하거나 다른 처리를 수행할 수 있습니다.
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
 
-            schedule_data = [
-                {'date': '2023-05-27', 'title': '2023-AIX 해커톤'},
-                {'date': '2023-05-27', 'title': '네이버웹툰 지상 최대 공모전'},
-                ]
+            # 데이터 조회
+            # 데이터베이스에서 id_key와 선택 날짜를 통해 일정 데이터를 불러온다.
+            query = "SELECT TITLE FROM SCHEDULE WHERE USER_ID = ? AND ? BETWEEN START_DAY AND END_DAY"
+            curs.execute(query, id_key, selectedDate)
+            schedule_rows = curs.fetchall()
+
+            curs.close()
+            db.close()
+
+            schedule_data = []
+            for row in schedule_rows:
+                # 각 row에서 필요한 정보를 추출하여 schedule_data에 추가합니다.
+                schedule_data.append({
+                    'title': row[0],
+                    # 추가적인 필드 정보를 추출하여 딕셔너리 형태로 저장합니다.
+                })
             
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
             response_data = {
@@ -166,15 +196,16 @@ def addpost(request):
             data = json.loads(request.body)
             id_key = data['id_key']
             title = data['title']
-            schedule_date = data['date']
+            startDay = data['startDay']
+            endDay= data['endDay']
             
             # 데이터 베이스 연동
             db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
             curs = db.cursor()
 
             # 데이터 입력
-            sql = "INSERT INTO Schedule (title, schedule_date, post_img, user_id) VALUES (?, ?, NULL, ?)"
-            curs.execute(sql, (title, schedule_date, id_key))
+            sql = "INSERT INTO Schedule (TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (?, ?, ?, NULL, ?)"
+            curs.execute(sql, (title, startDay, endDay, id_key))
             db.commit()  # 변경 사항 커밋
 
             curs.close()
@@ -182,6 +213,54 @@ def addpost(request):
             response_data = {
                 'message': '일정추가 성공!.'
                 }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
+    
+@csrf_exempt
+def profile(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            id_key = data['id_key']
+            
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            curs = db.cursor()
+
+            # 데이터 조회
+            # 데이터베이스에서 사용자의 아이디와 이메일, 생년월일을 불러온다.
+            query = "SELECT USER_ID, USER_NAME, DATE_OF_BIRTH, EMAIL FROM USERS WHERE ID=?"
+            curs.execute(query, id_key)
+            
+            rows = curs.fetchall()
+            for row in rows:
+                user_id = row[0]
+                user_name = row[1]
+                date_of_birth = row[2]
+                email = row[3]
+
+            curs.close()
+            db.close()
+            
+            # 응답 데이터를 만들어 클라이언트에게 전송합니다.
+            response_data = {
+                'user_id': user_id,
+                'user_name': user_name,
+                'date_of_birth': date_of_birth,
+                'email': email,
+                'message': '일정 불러오기 성공!',
+            }
             return JsonResponse(response_data)
         except json.JSONDecodeError as e:
             response_data = {
