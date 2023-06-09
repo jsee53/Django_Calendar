@@ -2,6 +2,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
 import pyodbc
+import base64
+from django.core.files.base import ContentFile
     
 @csrf_exempt
 def calendar(request):
@@ -12,7 +14,7 @@ def calendar(request):
             id_key = data['id_key']
 
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
 
             # 사용자의 일정 정보를 DB에서 받아옴
@@ -64,7 +66,7 @@ def login(request):
 
             # 데이터 베이스 연동            
             # 아이디와 비밀번호 일치 여부 확인
-            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
             
             sql = "SELECT id FROM Users WHERE user_id = ? AND password = ?"
@@ -110,13 +112,20 @@ def signup(request):
             email = data['email']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
 
             # 데이터 입력
             sql = "INSERT INTO Users (id, user_id, password, user_name, date_of_birth, email) VALUES (SEQ_ID.NEXTVAL, ?, ?, ?, ?, ?)"
             curs.execute(sql, (id, password, name, birthDate, email))
             db.commit()  # 변경 사항 커밋
+
+            sql = "SELECT id FROM Users WHERE user_id = ? AND password = ?"
+            curs.execute(sql, (id, password))
+            row = curs.fetchone()
+            if row:
+                # 로그인 성공 처리 및 추가 작업 수행
+                id_key = row[0]
 
             curs.close()
             db.close()
@@ -125,6 +134,7 @@ def signup(request):
             # 응답 데이터를 만들어 클라이언트에게 전송합니다.
             response_data = {
                 'successSignup' : successSignup,
+                'id_key':id_key,
                 'message': '회원가입 성공!',
             }
             return JsonResponse(response_data)
@@ -150,7 +160,7 @@ def schedule(request):
             selectedDate = data['selectedDate']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
 
             # 데이터 조회
@@ -200,7 +210,7 @@ def addpost(request):
             endDay= data['endDay']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
 
             # 데이터 입력
@@ -235,7 +245,7 @@ def profile(request):
             id_key = data['id_key']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='sys', pwd='tibero')
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
 
             # 데이터 조회
@@ -261,6 +271,60 @@ def profile(request):
                 'email': email,
                 'message': '일정 불러오기 성공!',
             }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
+
+@csrf_exempt
+def photo(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            id_key = data['id_key']
+            base64_image = data['image']
+            format, imgstr = base64_image.split(';base64,')  # format과 imgstr를 분리
+            image = base64.b64decode(imgstr)  # imgstr을 바이너리로 바꾸기
+
+            
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            curs = db.cursor()
+
+
+
+
+            ## 여기서 모델로부터 title과 start_day, end_day 를 받아옴
+            ## ----------------------------------------------------
+            title="2023 네이버웹툰 지상 최대 공모전"
+            startDay="2023-06-23"
+            endDay="2023-06-25"
+
+
+
+            # 데이터 입력
+            sql = "INSERT INTO Schedule (TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (?, ?, ?, ?, ?)"
+            curs.execute(sql, (title, startDay, endDay, image, id_key))
+            db.commit()  # 변경 사항 커밋
+
+            curs.close()
+            db.close()
+            response_data = {
+                'title': title,
+                'startDay': startDay,
+                'endDay': endDay,
+                'image': image,
+                'message': '일정추가 성공!.'
+                }
             return JsonResponse(response_data)
         except json.JSONDecodeError as e:
             response_data = {

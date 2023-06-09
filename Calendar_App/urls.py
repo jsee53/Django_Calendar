@@ -8,4 +8,5 @@ urlpatterns = [
     path("schedule", views.schedule),
     path("addpost", views.addpost),
     path("profile",views.profile),
+    path("photo", views.photo),
 ]
