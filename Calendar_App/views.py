@@ -165,7 +165,7 @@ def schedule(request):
 
             # 데이터 조회
             # 데이터베이스에서 id_key와 선택 날짜를 통해 일정 데이터를 불러온다.
-            query = "SELECT TITLE FROM SCHEDULE WHERE USER_ID = ? AND ? BETWEEN START_DAY AND END_DAY"
+            query = "SELECT SCHEDULE_ID, TITLE FROM SCHEDULE WHERE USER_ID = ? AND ? BETWEEN START_DAY AND END_DAY"
             curs.execute(query, id_key, selectedDate)
             schedule_rows = curs.fetchall()
 
@@ -176,7 +176,8 @@ def schedule(request):
             for row in schedule_rows:
                 # 각 row에서 필요한 정보를 추출하여 schedule_data에 추가합니다.
                 schedule_data.append({
-                    'title': row[0],
+                    'schedule_id': row.SCHEDULE_ID,  # 'SCHEDULE_ID'를 row에서 가져옵니다.
+                    'title': row.TITLE  # 'TITLE'을 row에서 가져옵니다.
                     # 추가적인 필드 정보를 추출하여 딕셔너리 형태로 저장합니다.
                 })
             
@@ -214,7 +215,7 @@ def addpost(request):
             curs = db.cursor()
 
             # 데이터 입력
-            sql = "INSERT INTO Schedule (TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (?, ?, ?, NULL, ?)"
+            sql = "INSERT INTO Schedule (SCHEDULE_ID, TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (SCHEDULE_SEQ_ID.NEXTVAL, ?, ?, ?, NULL, ?)"
             curs.execute(sql, (title, startDay, endDay, id_key))
             db.commit()  # 변경 사항 커밋
 
@@ -312,7 +313,7 @@ def photo(request):
 
 
             # 데이터 입력
-            sql = "INSERT INTO Schedule (TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (?, ?, ?, ?, ?)"
+            sql = "INSERT INTO Schedule (SCHEDULE_ID, TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (SCHEDULE_SEQ_ID.NEXTVAL, ?, ?, ?, ?, ?)"
             curs.execute(sql, (title, startDay, endDay, image, id_key))
             db.commit()  # 변경 사항 커밋
 
@@ -322,7 +323,92 @@ def photo(request):
                 'title': title,
                 'startDay': startDay,
                 'endDay': endDay,
-                'image': image,
+                'image': base64.b64encode(image).decode('utf-8'),
+                'message': '일정추가 성공!.'
+                }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
+    
+@csrf_exempt
+def updatepost(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            title_key = data['title_key']
+
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            curs = db.cursor()
+
+            # 사용자의 일정 정보를 DB에서 받아옴
+            sql = "SELECT TITLE, START_DAY, END_DAY FROM Schedule WHERE SCHEDULE_ID = ?"
+            curs.execute(sql, title_key)
+
+            # 일정 정보 가져오기
+            rows = curs.fetchall()
+            for row in rows:
+                title = row[0]  # 제목
+                start_date = row[1]  # 시작 날짜
+                end_date = row[2]  # 종료 날짜
+            
+                # 일정 정보를 딕셔너리 형태로 저장
+                response_data = {
+                    'title': title,
+                    'start_date': start_date,
+                    'end_date': end_date
+                }
+
+            # 연결 종료
+            curs.close()
+            db.close()
+            
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
+    
+@csrf_exempt
+def updateresult(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            id_key = data['id_key']
+            title = data['title']
+            startDay = data['startDay']
+            endDay= data['endDay']
+            
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            curs = db.cursor()
+
+            # 데이터 입력
+            sql = "UPDATE SCHEDULE SET TITLE = ?, START_DAY = ?, END_DAY = ? WHERE SCHEDULE_ID = ?"
+            curs.execute(sql, (title, startDay, endDay, id_key))
+            db.commit()  # 변경 사항 커밋
+
+            curs.close()
+            db.close()
+            response_data = {
                 'message': '일정추가 성공!.'
                 }
             return JsonResponse(response_data)
