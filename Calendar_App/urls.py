@@ -9,4 +9,6 @@ urlpatterns = [
     path("addpost", views.addpost),
     path("profile",views.profile),
     path("photo", views.photo),
+    path("updatepost", views.updatepost),
+    path("updateresult", views.updateresult),
 ]
