@@ -14,7 +14,7 @@ def calendar(request):
             id_key = data['id_key']
 
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 사용자의 일정 정보를 DB에서 받아옴
@@ -66,7 +66,7 @@ def login(request):
 
             # 데이터 베이스 연동            
             # 아이디와 비밀번호 일치 여부 확인
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
             
             sql = "SELECT id FROM Users WHERE user_id = ? AND password = ?"
@@ -112,7 +112,7 @@ def signup(request):
             email = data['email']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 데이터 입력
@@ -160,7 +160,7 @@ def schedule(request):
             selectedDate = data['selectedDate']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 데이터 조회
@@ -210,7 +210,7 @@ def addpost(request):
             endDay= data['endDay']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 데이터 입력
@@ -245,7 +245,7 @@ def profile(request):
             id_key = data['id_key']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 데이터 조회
@@ -297,7 +297,7 @@ def photo(request):
 
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
 
