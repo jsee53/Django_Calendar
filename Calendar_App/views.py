@@ -291,26 +291,55 @@ def photo(request):
         # POST 요청의 경우 처리 로직을 구현합니다.
         try:
             data = json.loads(request.body)
-            id_key = data['id_key']
             base64_image = data['image']
             format, imgstr = base64_image.split(';base64,')  # format과 imgstr를 분리
             image = base64.b64decode(imgstr)  # imgstr을 바이너리로 바꾸기
-
-            
-            # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
-            curs = db.cursor()
-
-
 
 
             ## 여기서 모델로부터 title과 start_day, end_day 를 받아옴
             ## ----------------------------------------------------
             title="2023 네이버웹툰 지상 최대 공모전"
-            startDay="2023-06-23"
-            endDay="2023-06-25"
+            startDay="2023-06-12"
+            endDay="2023-06-14"
 
 
+
+            response_data = {
+                'title': title,
+                'startDay': startDay,
+                'endDay': endDay,
+                'image': base64.b64encode(image).decode('utf-8'),
+                }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
+    
+@csrf_exempt
+def addphotopost(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            id_key = data['id_key']
+            title = data['title']
+            startDay = data['startDay']
+            endDay = data['endDay']
+            base64_image = data['image']
+            format, imgstr = base64_image.split(';base64,')  # format과 imgstr를 분리
+            image = base64.b64decode(imgstr)  # imgstr을 바이너리로 바꾸기
+
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            curs = db.cursor()
 
             # 데이터 입력
             sql = "INSERT INTO Schedule (SCHEDULE_ID, TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (SCHEDULE_SEQ_ID.NEXTVAL, ?, ?, ?, ?, ?)"
@@ -319,11 +348,8 @@ def photo(request):
 
             curs.close()
             db.close()
+
             response_data = {
-                'title': title,
-                'startDay': startDay,
-                'endDay': endDay,
-                'image': base64.b64encode(image).decode('utf-8'),
                 'message': '일정추가 성공!.'
                 }
             return JsonResponse(response_data)
@@ -392,7 +418,7 @@ def updateresult(request):
         # POST 요청의 경우 처리 로직을 구현합니다.
         try:
             data = json.loads(request.body)
-            id_key = data['id_key']
+            title_key = data['title_key']
             title = data['title']
             startDay = data['startDay']
             endDay= data['endDay']
@@ -403,13 +429,48 @@ def updateresult(request):
 
             # 데이터 입력
             sql = "UPDATE SCHEDULE SET TITLE = ?, START_DAY = ?, END_DAY = ? WHERE SCHEDULE_ID = ?"
-            curs.execute(sql, (title, startDay, endDay, id_key))
+            curs.execute(sql, (title, startDay, endDay, title_key))
             db.commit()  # 변경 사항 커밋
 
             curs.close()
             db.close()
             response_data = {
-                'message': '일정추가 성공!.'
+                'message': '일정수정 성공!.'
+                }
+            return JsonResponse(response_data)
+        except json.JSONDecodeError as e:
+            response_data = {
+                'message': '잘못된 요청입니다. JSON 형식이 올바르지 않습니다.',
+            }
+            return JsonResponse(response_data, status=400)
+    else:
+        # POST 요청이 아닌 경우 예외 처리를 수행하거나 다른 로직을 구현할 수 있습니다.
+        response_data = {
+            'message': '잘못된 요청입니다.'
+        }
+        return JsonResponse(response_data, status=400)
+    
+@csrf_exempt
+def deletepost(request):
+    if request.method == 'POST':
+        # POST 요청의 경우 처리 로직을 구현합니다.
+        try:
+            data = json.loads(request.body)
+            title_key = data['title_key']
+            
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            curs = db.cursor()
+
+            # 데이터 입력
+            sql = "DELETE FROM SCHEDULE WHERE SCHEDULE_ID = ?"
+            curs.execute(sql, title_key)
+            db.commit()  # 변경 사항 커밋
+
+            curs.close()
+            db.close()
+            response_data = {
+                'message': '일정삭제 성공!.'
                 }
             return JsonResponse(response_data)
         except json.JSONDecodeError as e:
