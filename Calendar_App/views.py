@@ -18,7 +18,7 @@ def calendar(request):
             curs = db.cursor()
 
             # 사용자의 일정 정보를 DB에서 받아옴
-            sql = "SELECT START_DAY, END_DAY FROM Schedule WHERE USER_ID = ?"
+            sql = "SELECT TITLE, START_DAY, END_DAY, COLOR FROM Schedule WHERE USER_ID = ?"
             curs.execute(sql, id_key)
 
             # 사용자의 일정 정보
@@ -27,13 +27,17 @@ def calendar(request):
             # 일정 정보 가져오기
             rows = curs.fetchall()
             for row in rows:
-                start_date = row[0]  # 시작 날짜
-                end_date = row[1]  # 종료 날짜
+                title = row[0]  # 일정 제목
+                start_date = row[1]  # 시작 날짜
+                end_date = row[2]  # 종료 날짜
+                color = row[3]  # 일정 색상
             
                 # 일정 정보를 딕셔너리 형태로 저장
                 schedule = {
+                    'title' : title,
                     'start_date': start_date,
-                    'end_date': end_date
+                    'end_date': end_date,
+                    'color': color,
                 }
 
                 # 일정 정보를 리스트에 추가
@@ -115,6 +119,19 @@ def signup(request):
             db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
 
+            # 아이디 중복 확인
+            sql = "SELECT COUNT(*) FROM Users WHERE user_id = ?"
+            curs.execute(sql, (id,))
+            row = curs.fetchone()
+            if row[0] > 0:
+                # 이미 해당 아이디가 존재하는 경우
+                successSignup = False
+                response_data = {
+                    'successSignup': successSignup,
+                    'message': '이미 존재하는 아이디입니다.',
+                }
+                return JsonResponse(response_data)
+
             # 데이터 입력
             sql = "INSERT INTO Users (id, user_id, password, user_name, date_of_birth, email) VALUES (SEQ_ID.NEXTVAL, ?, ?, ?, ?, ?)"
             curs.execute(sql, (id, password, name, birthDate, email))
@@ -165,7 +182,7 @@ def schedule(request):
 
             # 데이터 조회
             # 데이터베이스에서 id_key와 선택 날짜를 통해 일정 데이터를 불러온다.
-            query = "SELECT SCHEDULE_ID, TITLE FROM SCHEDULE WHERE USER_ID = ? AND ? BETWEEN START_DAY AND END_DAY"
+            query = "SELECT SCHEDULE_ID, TITLE, COLOR FROM SCHEDULE WHERE USER_ID = ? AND ? BETWEEN START_DAY AND END_DAY"
             curs.execute(query, id_key, selectedDate)
             schedule_rows = curs.fetchall()
 
@@ -177,7 +194,8 @@ def schedule(request):
                 # 각 row에서 필요한 정보를 추출하여 schedule_data에 추가합니다.
                 schedule_data.append({
                     'schedule_id': row.SCHEDULE_ID,  # 'SCHEDULE_ID'를 row에서 가져옵니다.
-                    'title': row.TITLE  # 'TITLE'을 row에서 가져옵니다.
+                    'title': row.TITLE,  # 'TITLE'을 row에서 가져옵니다.
+                    'color': row.COLOR
                     # 추가적인 필드 정보를 추출하여 딕셔너리 형태로 저장합니다.
                 })
             
@@ -209,14 +227,15 @@ def addpost(request):
             title = data['title']
             startDay = data['startDay']
             endDay= data['endDay']
+            color= data['color']
             
             # 데이터 베이스 연동
             db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
 
             # 데이터 입력
-            sql = "INSERT INTO Schedule (SCHEDULE_ID, TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (SCHEDULE_SEQ_ID.NEXTVAL, ?, ?, ?, NULL, ?)"
-            curs.execute(sql, (title, startDay, endDay, id_key))
+            sql = "INSERT INTO Schedule (SCHEDULE_ID, TITLE, START_DAY, END_DAY, POST_IMG, COLOR, USER_ID) VALUES (SCHEDULE_SEQ_ID.NEXTVAL, ?, ?, ?, NULL, ?, ?)"
+            curs.execute(sql, (title, startDay, endDay, color, id_key))
             db.commit()  # 변경 사항 커밋
 
             curs.close()
@@ -336,14 +355,15 @@ def addphotopost(request):
             base64_image = data['image']
             format, imgstr = base64_image.split(';base64,')  # format과 imgstr를 분리
             image = base64.b64decode(imgstr)  # imgstr을 바이너리로 바꾸기
+            color = data['color']
 
             # 데이터 베이스 연동
             db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
             curs = db.cursor()
 
             # 데이터 입력
-            sql = "INSERT INTO Schedule (SCHEDULE_ID, TITLE, START_DAY, END_DAY, POST_IMG, USER_ID) VALUES (SCHEDULE_SEQ_ID.NEXTVAL, ?, ?, ?, ?, ?)"
-            curs.execute(sql, (title, startDay, endDay, image, id_key))
+            sql = "INSERT INTO Schedule (SCHEDULE_ID, TITLE, START_DAY, END_DAY, POST_IMG, COLOR, USER_ID) VALUES (SCHEDULE_SEQ_ID.NEXTVAL, ?, ?, ?, ?, ?, ?)"
+            curs.execute(sql, (title, startDay, endDay, image, color, id_key))
             db.commit()  # 변경 사항 커밋
 
             curs.close()
@@ -378,7 +398,7 @@ def updatepost(request):
             curs = db.cursor()
 
             # 사용자의 일정 정보를 DB에서 받아옴
-            sql = "SELECT TITLE, START_DAY, END_DAY FROM Schedule WHERE SCHEDULE_ID = ?"
+            sql = "SELECT TITLE, START_DAY, END_DAY, POST_IMG, COLOR FROM Schedule WHERE SCHEDULE_ID = ?"
             curs.execute(sql, title_key)
 
             # 일정 정보 가져오기
@@ -387,12 +407,16 @@ def updatepost(request):
                 title = row[0]  # 제목
                 start_date = row[1]  # 시작 날짜
                 end_date = row[2]  # 종료 날짜
+                image = base64.b64encode(row[3]).decode()  # BLOB 이미지 데이터를 Base64 문자열로 변환
+                color = row[4]  # 일정 색상
             
                 # 일정 정보를 딕셔너리 형태로 저장
                 response_data = {
                     'title': title,
                     'start_date': start_date,
-                    'end_date': end_date
+                    'end_date': end_date,
+                    'image': image,
+                    'color': color,
                 }
 
             # 연결 종료
