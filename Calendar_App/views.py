@@ -366,7 +366,7 @@ def addphotopost(request):
             color = data['color']
 
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 데이터 입력
@@ -402,7 +402,7 @@ def updatepost(request):
             title_key = data['title_key']
 
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 사용자의 일정 정보를 DB에서 받아옴
@@ -456,7 +456,7 @@ def updateresult(request):
             endDay= data['endDay']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 데이터 입력
@@ -491,7 +491,7 @@ def deletepost(request):
             title_key = data['title_key']
             
             # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='JSEE53', pwd='0503see')
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
             curs = db.cursor()
 
             # 데이터 입력
