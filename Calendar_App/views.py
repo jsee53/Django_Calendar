@@ -4,7 +4,8 @@ import json
 import pyodbc
 import base64
 from django.core.files.base import ContentFile
-    
+from django.views.decorators.csrf import csrf_exempt
+
 @csrf_exempt
 def calendar(request):
     if request.method == 'POST':
