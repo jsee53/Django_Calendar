@@ -128,3 +128,5 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:19006",
     "exp://172.23.14.104:19000",
 ]
+
+# CORS_ALLOWED_ORIGINS = ['*']
