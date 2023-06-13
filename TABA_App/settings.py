@@ -42,9 +42,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -123,10 +123,14 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+# IP 주소 변수 설정
+MY_IP_ADDRESS = '172.23.14.120'
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://localhost:19006",
-    "exp://172.23.14.104:19000",
+    f"http://{MY_IP_ADDRESS}:19006",
+    'http://localhost:19006',
 ]
 
-# CORS_ALLOWED_ORIGINS = ['*']
+CORS_ALLOW_ALL_ORIGINS = False # 이전의 설정을 무시하도록 False로 설정
+
+ALLOWED_HOSTS = ['*']

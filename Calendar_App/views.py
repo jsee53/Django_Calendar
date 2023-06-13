@@ -4,7 +4,8 @@ import json
 import pyodbc
 import base64
 from django.core.files.base import ContentFile
-    
+from django.views.decorators.csrf import csrf_exempt
+
 @csrf_exempt
 def calendar(request):
     if request.method == 'POST':
@@ -82,6 +83,7 @@ def login(request):
                 success_login=True
             else:
                 # 로그인 실패 처리
+                id_key = 0
                 success_login=False
 
             curs.close()
@@ -415,17 +417,24 @@ def updatepost(request):
                 title = row[0]  # 제목
                 start_date = row[1]  # 시작 날짜
                 end_date = row[2]  # 종료 날짜
-                image = base64.b64encode(row[3]).decode()  # BLOB 이미지 데이터를 Base64 문자열로 변환
+                image = row[3] # 포스터 이미지
                 color = row[4]  # 일정 색상
+
+            # 이미지가 null인 경우 예외 처리
+            if image is None:
+                image_data = None
+            else:
+                # 이미지 데이터를 base64로 인코딩
+                image_data = base64.b64encode(image).decode('utf-8')
             
                 # 일정 정보를 딕셔너리 형태로 저장
-                response_data = {
-                    'title': title,
-                    'start_date': start_date,
-                    'end_date': end_date,
-                    'image': image,
-                    'color': color,
-                }
+            response_data = {
+                'title': title,
+                'start_date': start_date,
+                'end_date': end_date,
+                'image': image_data,
+                'color': color,
+            }
 
             # 연결 종료
             curs.close()
