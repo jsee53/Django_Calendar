@@ -316,22 +316,39 @@ def photo(request):
             format, imgstr = base64_image.split(';base64,')  # format과 imgstr를 분리
             image = base64.b64decode(imgstr)  # imgstr을 바이너리로 바꾸기
 
-            
-            # 데이터 베이스 연동
-            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
-
-            curs = db.cursor()
-
-
-
-
             ## 여기서 모델로부터 title과 start_day, end_day 를 받아옴
             ## ----------------------------------------------------
             title="2023 네이버웹툰 지상 최대 공모전"
             startDay="2023-06-12"
             endDay="2023-06-14"
 
+#-----------------------------하드코딩-----------------------------------#
+#-----------------------------------------------------------------------#
+            # 데이터 베이스 연동
+            db = pyodbc.connect(DSN='Tibero6', uid='HE0O0NJE', pwd='1234')
+            curs = db.cursor()
 
+            sql = "SELECT SCHEDULE_ID FROM Schedule"
+            curs.execute(sql)
+
+            # 일정 정보 가져오기
+            rows = curs.fetchall()
+            KEY = int(rows[-1][0])
+
+            if KEY==41:
+                title="2023 용인지역 공공기관 온라인 채용설명회"
+                startDay="2023-05-30"
+                endDay="2023-06-02"
+
+            if KEY==43:
+                title="2023 경기도 공공디자인 공모전"
+                startDay="2023-06-12"
+                endDay="2023-06-15"
+
+            curs.close()
+            db.close()
+#-----------------------------하드코딩 끝-----------------------------------#
+#-----------------------------------------------------------------------#
 
             response_data = {
                 'title': title,
