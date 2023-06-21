@@ -125,7 +125,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # IP 주소 변수 설정
-MY_IP_ADDRESS = ' 172.30.1.26'
+MY_IP_ADDRESS = '172.30.1.26'
 CORS_ALLOWED_ORIGINS = [
     f"http://{MY_IP_ADDRESS}:19006",
     'http://localhost:19006',
